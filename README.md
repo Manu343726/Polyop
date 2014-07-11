@@ -52,7 +52,7 @@ Now the assertion never fails since the user provided a fp-aware semantic for `o
 
 ## How it works?
 
-Since C++ operators work through overloading, we need a custom daratype to change the semantics of an operator. If you want to change the semantics of an exsiting type with its own operator overload you have to wrap it in a custom type.
+Since C++ operators work through overloading, we need a custom datatype to change the semantics of an operator. If you want to change the semantics of an exsiting type with its own operator overload you have to wrap it in a custom type.
 The function `pop::wrap()` takes an operand (lvalue or rvalue) and efficiently stores it to be used as an operand of a Polyop operator. In other words, `pop::wrap()` triggers the usage of a Polyop operator instead of the default C++ one.
 
 ``` cpp
@@ -62,7 +62,7 @@ a == b;            //Calls operator==(int,int)
 cpp::wrap(a) == b; //Calls custom Polyop operator== ( operator==( pop::operand<int> , int ) )
 ```
 
-Polyop operators aer evaluated lazily by default, and they are manipulable entities, allowing you to manipulate the expression before the call is even applied, do partial operator application, or even store the operator expression:
+Polyop operators are evaluated lazily by default, and they are manipulable entities, allowing you to manipulate the expression before the call is even applied, do partial operator application, or even store the operator expression:
 
 ``` cpp
 int a , b;
@@ -76,3 +76,32 @@ bool r2 = partial_call( b );         //Pass the last argumment to the expression
 bool lex_result = (pop::wrap( a ) == b ).context( lexicographical ); /Applies a "lexicographical" comparison context.
 
 ```
+
+### Ok, how it *really* works?
+
+Polyop using the `pop::operand` template Polyops wraps all the binary operators which request for a Polycode operator call, that is, any operator which one of its
+operands is a `pop::operand` instance. Then a proxy is generated storing the call signature abd the call argumments. Is that proxy what a call like `pop::wrap(1) + 2` returns.
+Then the proxy is called using the specified context (`pop::default_operator` by default) or an implicit call is done due to a implicit conversion from the operator expression to
+the result type.
+
+The user context customization works through *operator dispatchers*. An operator dispatcher is a particular overload of the required operator which specifies the action to be done 
+when the corresponding Polyop operator is called:
+
+``` cpp
+
+auto operator==(void(float,float) , float_context_tag )
+{
+    return []( float x , float y )
+    {
+        return /* some floating-point aware comparison */;
+    };
+}
+
+```  
+The idea behind operator dispatchers is to provide an alternative syntax to operator overloading, similar to the original, but which allows to specify context information. 
+
+The first argumment (Which only its used to carry semantic meaning) specifies the operator signature. In the example, `operator==(float,float)` (Note the return type is ignored).  
+The second argumment specifies in what context the operator should be applied. By default contexts are speficied by type tags, and the context resolution done though overload
+resolution. This approach has the advantage that the compiler is cappable of inline all the Polyop machinery and only generate the code which really does the work (The body of
+the operator dispatcher action in this case). But exactly because that reason **operator dispatchers should be declared/defined on the same namespace of their context tags**,
+to allow the compiler to find the overload via ADL.

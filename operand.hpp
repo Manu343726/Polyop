@@ -16,14 +16,15 @@ namespace pop
 {
     namespace impl
     {
-        template<typename T , typename is_rvalue , typename is_const = std::false_type>
+        template<typename T , typename is_lvalue>
         struct operand
         {
         public:
-            template<typename... ARGS>
-            operand( ARGS&&... args ) : 
-                _op_ref{ std::forward<ARGS>( args )... }
+            operand( const T& r ) : 
+                _op_ref{ r }
             {}
+                
+            operand( const operand& ) = default;
 
             const T& get() const
             {
@@ -35,16 +36,14 @@ namespace pop
                 return get();
             }
         private:
-            std::reference_wrapper<T> _op_ref;
+            std::reference_wrapper<const T> _op_ref;
         };
         
-        template<typename T , typename is_const>
-        struct operand<T,std::true_type,is_const>
+        template<typename T>
+        struct operand<T,std::false_type>
         {
         public:
-            template<typename... ARGS>
-            operand( ARGS&&... args ) : 
-                _op{ std::forward<ARGS>( args )... }
+            operand( T&& op ) : _op{ std::move( op ) }
             {}
 
             T& get()
@@ -73,8 +72,7 @@ namespace pop
     
     template<typename T>
     using operand = pop::impl::operand<typename std::decay<T>::type,
-                                       std::is_rvalue_reference<T>,
-                                       std::is_const<T>>;
+                                       std::is_lvalue_reference<T>>;
     
     template<typename T>
     pop::operand<T> wrap( T&& op )

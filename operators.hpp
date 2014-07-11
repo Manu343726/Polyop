@@ -13,48 +13,57 @@
 
 #include <functional>
 
-namespace pop
-{
+using namespace std::placeholders;
+
 #define REMOVE_PARENS(...) __VA_ARGS__
+
+#define POLYOP_DEFAULT_OPERATORS( op , functor ) \
+template<typename LHS , typename RHS>
+
         
-#define DEFAULT_BINARY_OPERATOR( op , functor )                                                                               \
-        template<typename LHS , typename RHS>                                                                                 \
-        auto operator REMOVE_PARENS op( const pop::operand<LHS>& lhs , const pop::operand<RHS>& rhs ) ->                                                   \
-            decltype( pop::make_proxy( std::bind( pop::operators::functor{} , std::cref(lhs.get()) , std::cref(rhs.get()) ) ) ) \
-        {                                                                                                                     \
-            return pop::make_proxy( std::bind( pop::operators::functor{} , std::cref(lhs.get()) , std::cref(rhs.get()) ) );     \
-        }    
-   
-    template<typename LHS , typename RHS>                                                                                 
-    auto operator==( const pop::operand<LHS>& lhs , const pop::operand<RHS>& rhs ) ->                                                   
-        decltype( pop::make_proxy( std::bind( pop::operators::equal{} , std::cref(lhs.get()) , std::cref(rhs.get()) ) ) ) 
-    {                                                                                                                     
-        return pop::make_proxy( std::bind( pop::operators::equal{} , std::cref(lhs.get()) , std::cref(rhs.get()) ) );     
-    } 
+#define BINARY_OP_WRAPPER( op , functor )                                                                                 \
+        template<typename LHS , typename RHS , typename CONTEXT>                                                                                   \
+        auto operator REMOVE_PARENS op( const pop::operand<LHS>& lhs , const pop::operand<RHS>& rhs )                           \
+        {                                                                                                                       \
+            return pop::make_proxy( pop::operators::functor<void(LHS,RHS)>{} , lhs , rhs );     \
+        }                                                                                                                       \
+                                                                                                                                \
+        template<typename LHS , typename RHS>                                                                                   \
+        auto operator REMOVE_PARENS op( const pop::operand<LHS>& lhs , const RHS& rhs )                                         \
+        {                                                                                                                       \
+            return pop::make_proxy( pop::operators::functor<void(LHS,RHS)>{} , lhs , rhs );     \
+        }                                                                                                                       \
+                                                                                                                                \
+        template<typename LHS , typename RHS>                                                                                   \
+        auto operator REMOVE_PARENS op( const LHS& lhs , const pop::operand<RHS>& rhs )                                         \
+        {                                                                                                                       \
+            return pop::make_proxy( pop::operators::functor<void(LHS,RHS)>{} , lhs , rhs );     \
+        }
+                                                                                                                                
     
-    //DEFAULT_BINARY_OPERATOR((==),equal);
-    DEFAULT_BINARY_OPERATOR((!=),not_equal);
-    DEFAULT_BINARY_OPERATOR((>) ,bigger_than);
-    DEFAULT_BINARY_OPERATOR((<) ,less_than);
-    DEFAULT_BINARY_OPERATOR((>=),bigger_or_equal);
-    DEFAULT_BINARY_OPERATOR((<=),less_or_equal);
+BINARY_OP_WRAPPER((==),equal);
+BINARY_OP_WRAPPER((!=),not_equal);
+BINARY_OP_WRAPPER((>) ,bigger_than);
+BINARY_OP_WRAPPER((<) ,less_than);
+BINARY_OP_WRAPPER((>=),bigger_or_equal);
+BINARY_OP_WRAPPER((<=),less_or_equal);
 
-    DEFAULT_BINARY_OPERATOR((+),add);
-    DEFAULT_BINARY_OPERATOR((-),sub);
-    DEFAULT_BINARY_OPERATOR((*),mul);
-    DEFAULT_BINARY_OPERATOR((/),div);
+BINARY_OP_WRAPPER((+),add);
+BINARY_OP_WRAPPER((-),sub);
+BINARY_OP_WRAPPER((*),mul);
+BINARY_OP_WRAPPER((/),div);
 
-    DEFAULT_BINARY_OPERATOR((&&),logical_and);
-    DEFAULT_BINARY_OPERATOR((||),logical_or);
+BINARY_OP_WRAPPER((&&),logical_and);
+BINARY_OP_WRAPPER((||),logical_or);
 
-    DEFAULT_BINARY_OPERATOR((&),bitwise_and);
-    DEFAULT_BINARY_OPERATOR((|),bitwise_or);
-    DEFAULT_BINARY_OPERATOR((^),bitwise_xor);
-    DEFAULT_BINARY_OPERATOR((<<),leftshift);
-    DEFAULT_BINARY_OPERATOR((>>),rightshift);
+BINARY_OP_WRAPPER((&),bitwise_and);
+BINARY_OP_WRAPPER((|),bitwise_or);
+BINARY_OP_WRAPPER((^),bitwise_xor);
+BINARY_OP_WRAPPER((<<),leftshift);
+BINARY_OP_WRAPPER((>>),rightshift);
 
-    DEFAULT_BINARY_OPERATOR((,),comma);
-}
+BINARY_OP_WRAPPER((,),comma);
+
 
 #endif	/* OPERATORS_HPP */
 

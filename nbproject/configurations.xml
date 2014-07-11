@@ -40,7 +40,7 @@
       </toolsSet>
       <compileType>
         <ccTool>
-          <standard>8</standard>
+          <commandLine>-std=c++1y</commandLine>
         </ccTool>
       </compileType>
       <item path="functors.hpp" ex="false" tool="3" flavor2="0">
@@ -66,6 +66,7 @@
         </cTool>
         <ccTool>
           <developmentMode>5</developmentMode>
+          <commandLine>-std=c++1y</commandLine>
         </ccTool>
         <fortranCompilerTool>
           <developmentMode>5</developmentMode>

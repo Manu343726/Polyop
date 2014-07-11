@@ -14,13 +14,18 @@ namespace pop
     {
 #define REMOVE_PARENS(...) __VA_ARGS__
         
-#define BINARY_OPERATOR_FTOR( op , name ) struct name                                               \
+#define BINARY_OPERATOR_FTOR( op , name ) template<typename SIGNATURE>                              \
+                                          struct name;                                              \
+                                                                                                    \
+                                          template<typename R , typename... ARGS>                   \
+                                          struct name<R(ARGS...)>                                   \
                                           {                                                         \
-                                              template<typename LHS , typename RHS>                 \
-                                              auto operator()( const LHS& lhs , const RHS& rhs ) -> \
-                                                  decltype( lhs REMOVE_PARENS op rhs )              \
+                                              name( const name&) = default;                         \
+                                                                                                    \
+                                              template<typename CONTEXT>                            \
+                                              auto operator()( CONTEXT rhs ) const                  \
                                               {                                                     \
-                                                  return lhs REMOVE_PARENS op rhs;                  \
+                                                  return [](ARGS...){} REMOVE_PARENS op rhs;        \
                                               }                                                     \
                                           };
         

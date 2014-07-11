@@ -9,6 +9,8 @@
 #define	OPERATOR_PROXY_HPP
 
 #include "operand.hpp"
+#include "Turbo/type_traits.hpp"
+#include "Turbo/utils/assert.hpp"
 
 #include <functional>
 #include <iostream>
@@ -18,42 +20,71 @@ namespace pop
     struct default_operator_tag{};
     extern const default_operator_tag default_operator;
     
-    template<typename OP>
+    template<typename OP , typename LHS , typename RHS>
     struct operator_proxy
     {
-        template<typename... ARGS>
-        operator_proxy( ARGS&&... args ) :
-            _operator{ std::forward<ARGS>( args )... }
+        template<typename OP_DISPATCH , typename LHS_ , typename RHS_>
+        operator_proxy( OP_DISPATCH&& op , LHS_&& lhs , RHS_&& rhs ) :
+            _operator_dispatcher( op ),
+            _lhs{ lhs },
+            _rhs{ rhs }
         {}
             
-        template<typename TAG>
-        typename std::result_of<OP()>::type operator()( TAG tag )
+        template<typename CONTEXT_TAG>
+        auto operator()( CONTEXT_TAG tag ) const
         {
-            std::cout << "Calling operator...\n";
-               
-            return _operator();
+            auto op = _operator_dispatcher( tag );
+            
+            return op( _lhs.get() , _rhs.get() );
         }
         
-        typename std::result_of<OP()>::type operator()( pop::default_operator_tag = pop::default_operator )
+        auto operator()() const
         {
-            std::cout << "Calling operator...\n";
-               
-            return _operator();
+            return (*this)( pop::default_operator );
         }
         
-        operator typename std::result_of<OP(pop::default_operator_tag)>::type()
+        template< typename CONTEXT_TAG>
+        auto context( CONTEXT_TAG tag )
+        {
+            return (*this)( tag );
+        }
+        
+        operator auto()
         {
             return (*this)();
         }
     private:
-        OP _operator;
+        OP _operator_dispatcher;
+        pop::operand<LHS> _lhs;
+        pop::operand<RHS> _rhs;
     };
     
-    template<typename OP>
-    pop::operator_proxy<typename std::decay<OP>::type> make_proxy( OP&& operator_ )
+    template<typename OP , typename LHS , typename RHS>
+    pop::operator_proxy<typename std::decay<OP>::type,
+                        typename std::decay<LHS>::type,
+                        typename std::decay<RHS>::type> 
+    make_proxy( OP&& operator_ , const pop::operand<LHS>& lhs , const pop::operand<RHS>& rhs )
     {
-        return { operator_ };
+        return { operator_ , lhs , rhs };
     } 
+    
+    template<typename OP , typename LHS , typename RHS>
+    pop::operator_proxy<typename std::decay<OP>::type,
+                        typename std::decay<LHS>::type,
+                        RHS> 
+    make_proxy( OP&& operator_ , const pop::operand<LHS>& lhs , const RHS& rhs )
+    {
+        return { operator_ , lhs , rhs };
+    } 
+    
+    template<typename OP , typename LHS , typename RHS>
+    pop::operator_proxy<typename std::decay<OP>::type,
+                        LHS,
+                        typename std::decay<RHS>::type> 
+    make_proxy( OP&& operator_ , const LHS& lhs , const pop::operand<RHS>& rhs )
+    {
+        return { operator_ , lhs , rhs };
+    }
 }
 
 
