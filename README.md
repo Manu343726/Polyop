@@ -1,7 +1,7 @@
 Polyop
 ======
 
-Overridable universal operators overloading for C++14
+Overridable universal operator overloading for C++14
 
 
 ## What is Polyop?
