@@ -59,7 +59,7 @@ The function `pop::wrap()` takes an operand (lvalue or rvalue) and efficiently s
 int a , b;
 
 a == b;            //Calls operator==(int,int)
-cpp::wrap(a) == b; //Calls custom Polyop operator== ( operator==( pop::operand<int> , int ) )
+cpp::wrap(a) == b; //Calls custom Polyop operator==
 ```
 
 Polyop operators are evaluated lazily by default, and they are manipulable entities, allowing you to manipulate the expression before the call is even applied, do partial operator application, or even store the operator expression:
@@ -79,7 +79,7 @@ bool lex_result = (pop::wrap( a ) == b ).context( lexicographical ); /Applies a 
 
 ### Ok, how it *really* works?
 
-Polyop using the `pop::operand` template Polyops wraps all the binary operators which request for a Polycode operator call, that is, any operator which one of its
+Using the `pop::operand` template Polyop wraps all the binary operators which request for a Polycode operator call, that is, any operator which one of its
 operands is a `pop::operand` instance. Then a proxy is generated storing the call signature abd the call argumments. Is that proxy what a call like `pop::wrap(1) + 2` returns.
 Then the proxy is called using the specified context (`pop::default_operator` by default) or an implicit call is done due to a implicit conversion from the operator expression to
 the result type.
