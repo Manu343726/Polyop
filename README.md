@@ -62,13 +62,16 @@ a == b;            //Calls operator==(int,int)
 cpp::wrap(a) == b; //Calls custom Polyop operator== ( operator==( pop::operand<int> , int ) )
 ```
 
-Polyop operators aer evaluated lazily by default, and they are manipulable entities, allowing you to manipulate the expression before the call is even applies, do partial operators application, or even store the operator expression:
+Polyop operators aer evaluated lazily by default, and they are manipulable entities, allowing you to manipulate the expression before the call is even applied, do partial operator application, or even store the operator expression:
 
 ``` cpp
 int a , b;
 
 auto comp = pop::wrap( a ) == b; //The comparison is not executed but stored in comp.
-bool result = comp(); //Call the comparison.
+bool r1 = comp(); //Call the comparison.
+auto expression = __ == __; 
+auto partial_call = expression( a );
+bool r2 = partial_call( b );
 
 bool lex_result = (pop::wrap( a ) == b ).context( lexicographical ); /Applies a "lexicographical" comparison context.
 
