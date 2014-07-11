@@ -69,9 +69,9 @@ int a , b;
 
 auto comp = pop::wrap( a ) == b; //The comparison is not executed but stored in comp.
 bool r1 = comp(); //Call the comparison.
-auto expression = __ == __; 
-auto partial_call = expression( a );
-bool r2 = partial_call( b );
+auto expression = __ == __;          //Store a naked comparison expression
+auto partial_call = expression( a ); //Pass the first argumment to the expression
+bool r2 = partial_call( b );         //Pass the last argumment to the expression (Then calling the operator).
 
 bool lex_result = (pop::wrap( a ) == b ).context( lexicographical ); /Applies a "lexicographical" comparison context.
 
