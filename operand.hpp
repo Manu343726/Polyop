@@ -77,13 +77,22 @@ namespace pop
     template<typename T>
     pop::operand<T> wrap( T&& op )
     {
-        return { op };
+        return { std::forward<T>( op ) };
     }
     
     template<typename T , typename... ARGS>
     pop::operand<T> make_op( ARGS&&... args )
     {
         return { args... };
+    }
+    
+    namespace trigger
+    {
+        template<typename T>
+        pop::operand<T> _( T&& op )
+        {
+            return pop::wrap( std::forward<T>( op ) );
+        }
     }
 }
 

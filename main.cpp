@@ -43,10 +43,12 @@ auto operator==( void(float,float) , floating_point_context_tag )
 
 int main()
 {
-    auto op = pop::wrap( 1.0f ) == 1.0f;
+    using pop::trigger::_;
+    
+    auto op = _( 1.0f ) == 1.0f;
     
     std::cout << std::boolalpha << op() << std::endl;
     std::cout << std::boolalpha << op( floating_point_context_tag{} ) << std::endl;
-    std::cout << std::boolalpha << (pop::wrap(1.0f) == 2.0f)( floating_point_context_tag{} ) << std::endl;
+    std::cout << std::boolalpha << (_(1.0f) == 2.0f)( floating_point_context_tag{} ) << std::endl;
 }
 
