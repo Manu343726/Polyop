@@ -160,7 +160,7 @@ int main()
 
 ```
 
-There is not output code for `pop::operand`, `pop::operator_proxy`, neither reference wrappers. The only code generated is the body of the two Polyop operator dispatchers specified in the example:
+There is not output code for `pop::operand`, `pop::operator_proxy`, nor reference wrappers. The only code generated is the body of the two Polyop operator dispatchers specified in the example:
 
 ``` asm 
 pop::operator==(void (*)(float, float), pop::default_operator_tag):
