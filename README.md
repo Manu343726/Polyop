@@ -1,7 +1,7 @@
 Polyop
 ======
 
-Overridable universal operators overloading for C++11
+Overridable universal operator overloading for C++14
 
 
 ## What is Polyop?
@@ -59,7 +59,7 @@ The function `pop::wrap()` takes an operand (lvalue or rvalue) and efficiently s
 int a , b;
 
 a == b;            //Calls operator==(int,int)
-cpp::wrap(a) == b; //Calls custom Polyop operator== ( operator==( pop::operand<int> , int ) )
+cpp::wrap(a) == b; //Calls custom Polyop operator==
 ```
 
 Polyop operators are evaluated lazily by default, and they are manipulable entities, allowing you to manipulate the expression before the call is even applied, do partial operator application, or even store the operator expression:
@@ -79,7 +79,7 @@ bool lex_result = (pop::wrap( a ) == b ).context( lexicographical ); /Applies a 
 
 ### Ok, how it *really* works?
 
-Polyop using the `pop::operand` template Polyops wraps all the binary operators which request for a Polycode operator call, that is, any operator which one of its
+Using the `pop::operand` template Polyop wraps all the binary operators which request for a Polycode operator call, that is, any operator which one of its
 operands is a `pop::operand` instance. Then a proxy is generated storing the call signature abd the call argumments. Is that proxy what a call like `pop::wrap(1) + 2` returns.
 Then the proxy is called using the specified context (`pop::default_operator` by default) or an implicit call is done due to a implicit conversion from the operator expression to
 the result type.
@@ -105,3 +105,65 @@ The second argumment specifies in what context the operator should be applied. B
 resolution. This approach has the advantage that the compiler is cappable of inline all the Polyop machinery and only generate the code which really does the work (The body of
 the operator dispatcher action in this case). But exactly because that reason **operator dispatchers should be declared/defined on the same namespace of their context tags**,
 to allow the compiler to find the overload via ADL.
+
+## Performance 
+
+Polyop operators are designed to act as high-level syntactic suggar, with no runtime performance hits at all. All the Polyop machinery is erased at compile-time with minimal compiler optimizations (Common day to day inlining), generating only the code provided by the user. [Here](http://goo.gl/eF4zyp) is an example of a compilation with minimal optimization enabled (`-O1`) of this program:
+
+``` cpp
+#include "operator_proxy.hpp"
+#include "operand.hpp"
+#include "operators.hpp"
+
+#include <iostream>
+#include <cmath>
+
+struct floating_point_context_tag{};
+
+namespace pop
+{
+    auto operator==( void(float,float) , pop::default_operator_tag )
+    {
+        return []( float x , float y )
+        {
+            std::cout << "Using default\n";
+            
+            return x == y;
+        };
+    }
+}
+
+auto operator==( void(float,float) , floating_point_context_tag )
+{
+    return []( float x , float y )
+    {
+        std::cout << "Using floating-point\n";
+
+        return std::abs( x - y ) < 0.00001f;
+    };
+}
+
+
+int main()
+{
+    using pop::trigger::_;
+    
+    auto op = _( 1.0f ) == 1.0f;
+    
+    std::cout << std::boolalpha << op() << std::endl;
+    std::cout << std::boolalpha << op( floating_point_context_tag{} ) << std::endl;
+    std::cout << std::boolalpha << (_(1.0f) == 2.0f)( floating_point_context_tag{} ) << std::endl;
+}
+
+```
+
+There is not output code for `pop::operand`, `pop::operator_proxy`, nor reference wrappers. The only code generated is the body of the two Polyop operator dispatchers specified in the example:
+
+``` asm 
+pop::operator==(void (*)(float, float), pop::default_operator_tag):
+	movl	$0, %eax
+	ret
+operator==(void (*)(float, float), floating_point_context_tag):
+	movl	$0, %eax
+	ret
+```
