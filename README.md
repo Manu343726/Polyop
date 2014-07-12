@@ -105,3 +105,68 @@ The second argumment specifies in what context the operator should be applied. B
 resolution. This approach has the advantage that the compiler is cappable of inline all the Polyop machinery and only generate the code which really does the work (The body of
 the operator dispatcher action in this case). But exactly because that reason **operator dispatchers should be declared/defined on the same namespace of their context tags**,
 to allow the compiler to find the overload via ADL.
+
+## Performance 
+
+Polyop operators are designed to act as high-level syntactic suggar, with no runtime performance hits at all. All the Polyop machinery is erased at compile-time with minimal compiler optimizations (Common day to day inlining), generating only the code provided by the user. [Here](http://goo.gl/eF4zyp) is an example of a compilation with minimal optimization enabled (`-O1`) of this program:
+
+``` cpp
+#include "operator_proxy.hpp"
+#include "operand.hpp"
+#include "operators.hpp"
+
+#include <iostream>
+#include <cmath>
+
+
+
+
+struct floating_point_context_tag{};
+
+namespace pop
+{
+    auto operator==( void(float,float) , pop::default_operator_tag )
+    {
+        return []( float x , float y )
+        {
+            std::cout << "Using default\n";
+            
+            return x == y;
+        };
+    }
+}
+
+auto operator==( void(float,float) , floating_point_context_tag )
+{
+    return []( float x , float y )
+    {
+        std::cout << "Using floating-point\n";
+
+        return std::abs( x - y ) < 0.00001f;
+    };
+}
+
+
+int main()
+{
+    using pop::trigger::_;
+    
+    auto op = _( 1.0f ) == 1.0f;
+    
+    std::cout << std::boolalpha << op() << std::endl;
+    std::cout << std::boolalpha << op( floating_point_context_tag{} ) << std::endl;
+    std::cout << std::boolalpha << (_(1.0f) == 2.0f)( floating_point_context_tag{} ) << std::endl;
+}
+
+```
+
+There is not output code for `pop::operand`, `pop::operator_proxy`, neither reference wrappers. The only code generated is the body of the two Polyop operator dispatchers specified in the example:
+
+``` asm 
+pop::operator==(void (*)(float, float), pop::default_operator_tag):
+	movl	$0, %eax
+	ret
+operator==(void (*)(float, float), floating_point_context_tag):
+	movl	$0, %eax
+	ret
+```
