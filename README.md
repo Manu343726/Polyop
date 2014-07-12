@@ -118,9 +118,6 @@ Polyop operators are designed to act as high-level syntactic suggar, with no run
 #include <iostream>
 #include <cmath>
 
-
-
-
 struct floating_point_context_tag{};
 
 namespace pop
