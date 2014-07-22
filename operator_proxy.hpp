@@ -9,8 +9,6 @@
 #define	OPERATOR_PROXY_HPP
 
 #include "operand.hpp"
-#include "Turbo/type_traits.hpp"
-#include "Turbo/utils/assert.hpp"
 
 #include <functional>
 #include <iostream>
